@@ -28,12 +28,23 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+        // Distance filter: notify only when user moves 250 meters or more
+        locationManager.distanceFilter = 250
+        // Pause location updates when app goes to background to save battery
+        locationManager.pausesLocationUpdatesAutomatically = true
         checkAuthorization()
     }
 
     func requestLocation() {
         checkAuthorization()
-        locationManager.requestLocation()
+        // Start continuous location updates with distance filter
+        // This will automatically notify when user moves >= distanceFilter (250m)
+        locationManager.startUpdatingLocation()
+    }
+
+    /// Stop continuous location updates (call when app goes to background)
+    func stopUpdatingLocation() {
+        locationManager.stopUpdatingLocation()
     }
 
     private func checkAuthorization() {

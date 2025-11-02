@@ -166,8 +166,12 @@ class ContentViewModel: ObservableObject {
         }
     }
 
-    /// Manually refresh weather data
+    /// Manually refresh weather data and location
     func refreshWeather() {
+        // Request fresh location update (respecting distance filter)
+        requestLocation()
+
+        // Also fetch weather with current coordinates if available
         if let latitude = locationManager.latitude, let longitude = locationManager.longitude {
             fetchWeather(latitude: latitude, longitude: longitude)
         } else {
