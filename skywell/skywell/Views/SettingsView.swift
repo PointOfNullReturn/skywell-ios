@@ -18,15 +18,8 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var credentials: [WeatherProviderCredential]
 
-    @StateObject private var viewModel: SettingsViewModel
-
-    init() {
-        // Initialize SettingsViewModel in a deferred way
-        _viewModel = StateObject(wrappedValue: SettingsViewModel(
-            preferencesManager: UserPreferencesManager(modelContext: ModelContext(try! ModelContainer(for: UserPreferences.self))),
-            modelContext: ModelContext(try! ModelContainer(for: WeatherProviderCredential.self))
-        ))
-    }
+    @StateObject private var viewModel = SettingsViewModel()
+    @State private var hasConfiguredViewModel = false
 
     var body: some View {
         NavigationStack {
@@ -124,6 +117,20 @@ struct SettingsView: View {
         } message: {
             Text(viewModel.errorMessage ?? "An error occurred")
         }
+        .onAppear {
+            configureViewModelIfNeeded()
+        }
+    }
+
+    private func configureViewModelIfNeeded() {
+        if hasConfiguredViewModel {
+            viewModel.refreshPreferences()
+            return
+        }
+
+        let preferencesManager = UserPreferencesManager(modelContext: modelContext)
+        viewModel.configure(preferencesManager: preferencesManager, modelContext: modelContext)
+        hasConfiguredViewModel = true
     }
 
 }
@@ -186,5 +193,5 @@ struct AddProviderSheet: View {
 
 #Preview {
     SettingsView()
-        .modelContainer(for: WeatherProviderCredential.self, inMemory: true)
+        .modelContainer(for: [WeatherProviderCredential.self, UserPreferences.self], inMemory: true)
 }

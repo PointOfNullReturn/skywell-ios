@@ -12,6 +12,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct NavigationStackView: View {
     @State private var showingSettings = false
@@ -37,4 +38,5 @@ struct NavigationStackView: View {
 
 #Preview {
     NavigationStackView()
+        .modelContainer(for: [WeatherProviderCredential.self, UserPreferences.self], inMemory: true)
 }

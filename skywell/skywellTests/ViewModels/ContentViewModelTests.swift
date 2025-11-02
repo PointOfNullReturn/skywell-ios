@@ -27,7 +27,7 @@ final class ContentViewModelTests: XCTestCase {
     override func setUp() {
         super.setUp()
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: UserPreferences.self, configurations: config)
+        let container = try! ModelContainer(for: UserPreferences.self, WeatherProviderCredential.self, configurations: config)
         modelContext = ModelContext(container)
         preferencesManager = UserPreferencesManager(modelContext: modelContext)
 
@@ -39,9 +39,9 @@ final class ContentViewModelTests: XCTestCase {
         viewModel = ContentViewModel(
             locationManager: locationManager,
             weatherService: weatherService,
-            preferencesManager: preferencesManager,
             keychainManager: .shared
         )
+        viewModel.configure(preferencesManager: preferencesManager, modelContext: modelContext)
     }
 
     override func tearDown() {
@@ -111,9 +111,9 @@ final class ContentViewModelTests: XCTestCase {
         let mockWeatherService = WeatherService(provider: mockProvider)
         let testViewModel = ContentViewModel(
             locationManager: locationManager,
-            weatherService: mockWeatherService,
-            preferencesManager: preferencesManager
+            weatherService: mockWeatherService
         )
+        testViewModel.configure(preferencesManager: preferencesManager, modelContext: modelContext)
 
         let expectation = XCTestExpectation(description: "Weather fetched")
 
@@ -136,9 +136,9 @@ final class ContentViewModelTests: XCTestCase {
         let mockWeatherService = WeatherService(provider: mockProvider)
         let testViewModel = ContentViewModel(
             locationManager: locationManager,
-            weatherService: mockWeatherService,
-            preferencesManager: preferencesManager
+            weatherService: mockWeatherService
         )
+        testViewModel.configure(preferencesManager: preferencesManager, modelContext: modelContext)
 
         let expectation = XCTestExpectation(description: "Error handled")
 
@@ -368,9 +368,9 @@ final class ContentViewModelTests: XCTestCase {
         let mockWeatherService = WeatherService(provider: mockProvider)
         let testViewModel = ContentViewModel(
             locationManager: locationManager,
-            weatherService: mockWeatherService,
-            preferencesManager: preferencesManager
+            weatherService: mockWeatherService
         )
+        testViewModel.configure(preferencesManager: preferencesManager, modelContext: modelContext)
 
         let expectation = XCTestExpectation(description: "Error displayed")
 
@@ -474,9 +474,9 @@ final class ContentViewModelTests: XCTestCase {
         let mockWeatherService = WeatherService(provider: mockProvider)
         let testViewModel = ContentViewModel(
             locationManager: locationManager,
-            weatherService: mockWeatherService,
-            preferencesManager: preferencesManager
+            weatherService: mockWeatherService
         )
+        testViewModel.configure(preferencesManager: preferencesManager, modelContext: modelContext)
 
         let expectation = XCTestExpectation(description: "Complete workflow")
 

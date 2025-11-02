@@ -73,11 +73,18 @@ class UserPreferencesManager {
     }
 
     /// Set up default preferences for first-time users
-    /// - Parameter activeProviderId: ID of provider to set as active (optional)
-    func initializeDefaultPreferences(activeProviderId: String? = nil) throws {
+    /// - Parameters:
+    ///   - activeProviderId: ID of provider to set as active (optional)
+    ///   - hasCompletedOnboarding: Flag indicating if the onboarding flow has been completed
+    func initializeDefaultPreferences(
+        activeProviderId: String? = nil,
+        hasCompletedOnboarding: Bool = false
+    ) throws {
         let prefs = UserPreferences(
             activeProviderId: activeProviderId,
-            unitPreference: .metric
+            unitPreference: .metric,
+            colorScheme: .system,
+            hasCompletedOnboarding: hasCompletedOnboarding
         )
         modelContext.insert(prefs)
         try modelContext.save()
@@ -125,5 +132,18 @@ class UserPreferencesManager {
     /// Get the current color scheme preference
     func getColorScheme() -> ColorScheme {
         getPreferences().colorScheme
+    }
+
+    /// Check if onboarding has been completed
+    func hasCompletedOnboarding() -> Bool {
+        getPreferences().hasCompletedOnboarding
+    }
+
+    /// Mark the onboarding flow as completed
+    func markOnboardingComplete() throws {
+        let prefs = getPreferences()
+        prefs.hasCompletedOnboarding = true
+        prefs.lastModifiedDate = Date()
+        try modelContext.save()
     }
 }

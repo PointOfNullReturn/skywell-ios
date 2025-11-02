@@ -43,6 +43,7 @@ final class UserPreferencesManagerTests: XCTestCase {
         XCTAssertNil(prefs.activeProviderId)
         XCTAssertEqual(prefs.unitPreference, .metric)
         XCTAssertEqual(prefs.colorScheme, .system)
+        XCTAssertFalse(prefs.hasCompletedOnboarding)
     }
 
     func testGetPreferencesReturnsSameInstanceOnMultipleCalls() {
@@ -137,14 +138,16 @@ final class UserPreferencesManagerTests: XCTestCase {
         let prefs = manager.getPreferences()
         XCTAssertNil(prefs.activeProviderId)
         XCTAssertEqual(prefs.unitPreference, .metric)
+        XCTAssertFalse(prefs.hasCompletedOnboarding)
     }
 
     func testInitializeDefaultPreferencesWithProvider() throws {
-        try manager.initializeDefaultPreferences(activeProviderId: "initial-provider")
+        try manager.initializeDefaultPreferences(activeProviderId: "initial-provider", hasCompletedOnboarding: true)
 
         let prefs = manager.getPreferences()
         XCTAssertEqual(prefs.activeProviderId, "initial-provider")
         XCTAssertEqual(prefs.unitPreference, .metric)
+        XCTAssertTrue(prefs.hasCompletedOnboarding)
     }
 
     // MARK: - Reset Active Provider Tests
@@ -175,6 +178,23 @@ final class UserPreferencesManagerTests: XCTestCase {
         let after2 = manager.getPreferences().lastModifiedDate
 
         XCTAssertGreaterThan(after2, after1)
+    }
+
+    // MARK: - Onboarding Completion Tests
+
+    func testMarkOnboardingCompleteSetsFlag() throws {
+        try manager.markOnboardingComplete()
+
+        let prefs = manager.getPreferences()
+        XCTAssertTrue(prefs.hasCompletedOnboarding)
+    }
+
+    func testHasCompletedOnboardingReflectsState() throws {
+        XCTAssertFalse(manager.hasCompletedOnboarding())
+
+        try manager.markOnboardingComplete()
+
+        XCTAssertTrue(manager.hasCompletedOnboarding())
     }
 
     // MARK: - Provider Status Tests

@@ -208,6 +208,7 @@ final class WeatherModelTests: XCTestCase {
         XCTAssertNil(prefs.activeProviderId)
         XCTAssertEqual(prefs.unitPreference, .metric)
         XCTAssertNotNil(prefs.lastModifiedDate)
+        XCTAssertFalse(prefs.hasCompletedOnboarding)
     }
 
     func testUserPreferencesWithActiveProvider() {
@@ -216,6 +217,7 @@ final class WeatherModelTests: XCTestCase {
 
         XCTAssertEqual(prefs.activeProviderId, providerId)
         XCTAssertEqual(prefs.unitPreference, .metric)
+        XCTAssertFalse(prefs.hasCompletedOnboarding)
     }
 
     func testUserPreferencesWithImperialUnits() {
@@ -223,6 +225,7 @@ final class WeatherModelTests: XCTestCase {
 
         XCTAssertEqual(prefs.unitPreference, .imperial)
         XCTAssertNil(prefs.activeProviderId)
+        XCTAssertFalse(prefs.hasCompletedOnboarding)
     }
 
     func testUserPreferencesWithAllFields() {
@@ -234,6 +237,7 @@ final class WeatherModelTests: XCTestCase {
         XCTAssertEqual(prefs.activeProviderId, "active-provider")
         XCTAssertEqual(prefs.unitPreference, .imperial)
         XCTAssertEqual(prefs.id, "user-preferences")
+        XCTAssertFalse(prefs.hasCompletedOnboarding)
     }
 
     func testUserPreferencesSingletonId() {

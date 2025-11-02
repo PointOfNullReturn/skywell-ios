@@ -20,32 +20,24 @@ struct ContentView: View {
     @Query private var preferences: [UserPreferences]
     @Query private var credentials: [WeatherProviderCredential]
 
-    @StateObject private var viewModel: ContentViewModel
+    @StateObject private var viewModel = ContentViewModel(
+        locationManager: LocationManager(),
+        weatherService: WeatherService(provider: OpenWeatherAPIAdapter(apiKey: "")),
+        keychainManager: .shared
+    )
     @State private var navigateToSettings: Bool = false
+    @State private var hasConfiguredViewModel = false
 
-    init() {
-        let locationManager = LocationManager()
-        let provider = OpenWeatherAPIAdapter(apiKey: "")
-        let weatherService = WeatherService(provider: provider)
-        let preferencesManager = UserPreferencesManager(modelContext: ModelContext(try! ModelContainer(for: UserPreferences.self)))
-
-        _viewModel = StateObject(wrappedValue: ContentViewModel(
-            locationManager: locationManager,
-            weatherService: weatherService,
-            preferencesManager: preferencesManager,
-            keychainManager: .shared
-        ))
-    }
-
-    var isConfigured: Bool {
-        !credentials.isEmpty && preferences.first?.activeProviderId != nil
+    private var shouldShowOnboarding: Bool {
+        guard let preferences = preferences.first else { return true }
+        return preferences.hasCompletedOnboarding == false
     }
 
     var body: some View {
-        if isConfigured {
-            weatherView
-        } else {
+        if shouldShowOnboarding {
             OnboardingView()
+        } else {
+            weatherView
         }
     }
 
@@ -58,6 +50,7 @@ struct ContentView: View {
                 Spacer()
             }
             .onAppear {
+                configureViewModelIfNeeded()
                 viewModel.initializeActiveProvider()
                 viewModel.requestLocation()
             }
@@ -166,10 +159,16 @@ struct ContentView: View {
         .padding()
     }
 
+    private func configureViewModelIfNeeded() {
+        guard !hasConfiguredViewModel else { return }
 
+        let preferencesManager = UserPreferencesManager(modelContext: modelContext)
+        viewModel.configure(preferencesManager: preferencesManager, modelContext: modelContext)
+        hasConfiguredViewModel = true
+    }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: WeatherProviderCredential.self, inMemory: true)
+        .modelContainer(for: [WeatherProviderCredential.self, UserPreferences.self], inMemory: true)
 }

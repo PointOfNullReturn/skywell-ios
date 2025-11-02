@@ -18,18 +18,7 @@ struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var credentials: [WeatherProviderCredential]
 
-    @StateObject private var viewModel: OnboardingViewModel
-    @State private var showAddProvider = false
-
-    init() {
-        let locationManager = LocationManager()
-        let preferencesManager = UserPreferencesManager(modelContext: ModelContext(try! ModelContainer(for: UserPreferences.self)))
-
-        _viewModel = StateObject(wrappedValue: OnboardingViewModel(
-            locationManager: locationManager,
-            preferencesManager: preferencesManager
-        ))
-    }
+    @StateObject private var viewModel = OnboardingViewModel(locationManager: LocationManager())
 
     var body: some View {
         NavigationStack {
@@ -52,6 +41,7 @@ struct OnboardingView: View {
         .sheet(isPresented: $viewModel.showAddProvider) {
             AddProviderSheet(isPresented: $viewModel.showAddProvider, onAdd: handleAddProvider)
         }
+        .onAppear(perform: configurePreferencesManager)
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK") {
                 viewModel.dismissError()
@@ -259,6 +249,13 @@ struct OnboardingView: View {
         do {
             try KeychainManager.shared.save(apiKey, for: credential.keychainKey)
             modelContext.insert(credential)
+            try modelContext.save()
+
+            let preferencesManager = UserPreferencesManager(modelContext: modelContext)
+            if preferencesManager.getActiveProviderId() == nil {
+                try preferencesManager.updateActiveProvider(credential.id)
+                NotificationCenter.default.post(name: NSNotification.Name("ActiveProviderChanged"), object: nil)
+            }
 
             // Update viewModel's API key status
             viewModel.hasApiKey = true
@@ -267,9 +264,28 @@ struct OnboardingView: View {
             viewModel.showError = true
         }
     }
+
+    private func configurePreferencesManager() {
+        let preferencesManager = UserPreferencesManager(modelContext: modelContext)
+        viewModel.configure(preferencesManager: preferencesManager)
+
+        // Sync hasApiKey status with existing credentials
+        viewModel.hasApiKey = !credentials.isEmpty
+
+        if !preferencesManager.hasCompletedOnboarding() {
+            let hasStoredProviders = preferencesManager.getActiveProviderId() != nil || !credentials.isEmpty
+            if hasStoredProviders {
+                if preferencesManager.getActiveProviderId() == nil, let firstCredential = credentials.first {
+                    try? preferencesManager.updateActiveProvider(firstCredential.id)
+                    NotificationCenter.default.post(name: NSNotification.Name("ActiveProviderChanged"), object: nil)
+                }
+                viewModel.skipOnboarding()
+            }
+        }
+    }
 }
 
 #Preview {
     OnboardingView()
-        .modelContainer(for: WeatherProviderCredential.self, inMemory: true)
+        .modelContainer(for: [WeatherProviderCredential.self, UserPreferences.self], inMemory: true)
 }

@@ -70,7 +70,7 @@ class OnboardingViewModel: ObservableObject {
     // MARK: - Dependencies
 
     private let locationManager: LocationManager
-    private let preferencesManager: UserPreferencesManager
+    private var preferencesManager: UserPreferencesManager?
 
     // MARK: - Internal State
 
@@ -79,13 +79,17 @@ class OnboardingViewModel: ObservableObject {
     // MARK: - Initialization
 
     init(
-        locationManager: LocationManager,
-        preferencesManager: UserPreferencesManager
+        locationManager: LocationManager
     ) {
         self.locationManager = locationManager
-        self.preferencesManager = preferencesManager
 
         setupBindings()
+    }
+
+    /// Configure persistence dependencies once the view's modelContext is available
+    /// - Parameter preferencesManager: Manager backed by the shared SwiftData context
+    func configure(preferencesManager: UserPreferencesManager) {
+        self.preferencesManager = preferencesManager
         checkApiKeyStatus()
     }
 
@@ -151,7 +155,10 @@ class OnboardingViewModel: ObservableObject {
 
     /// Check if any API key is configured
     private func checkApiKeyStatus() {
-        let preferences = preferencesManager.getPreferences()
+        guard let preferences = preferencesManager?.getPreferences() else {
+            hasApiKey = false
+            return
+        }
         hasApiKey = preferences.activeProviderId != nil
     }
 
@@ -190,6 +197,15 @@ class OnboardingViewModel: ObservableObject {
 
     /// Mark onboarding as complete
     private func completeOnboarding() {
+        do {
+            if let preferencesManager {
+                try preferencesManager.markOnboardingComplete()
+                NotificationCenter.default.post(name: NSNotification.Name("UserPreferencesChanged"), object: nil)
+            }
+        } catch {
+            handleError("Failed to save onboarding state")
+            return
+        }
         isOnboardingComplete = true
     }
 

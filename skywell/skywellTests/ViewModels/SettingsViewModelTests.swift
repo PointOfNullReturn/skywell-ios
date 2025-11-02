@@ -43,6 +43,7 @@ final class SettingsViewModelTests: XCTestCase {
         let prefs = viewModel.currentPreferences
         XCTAssertNil(prefs.activeProviderId)
         XCTAssertEqual(prefs.unitPreference, .metric)
+        XCTAssertFalse(prefs.hasCompletedOnboarding)
     }
 
     func testViewModelInitializationSetsDefaultErrorState() {

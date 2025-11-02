@@ -21,13 +21,20 @@ final class UserPreferences {
     var unitPreference: UnitPreference
     var colorScheme: ColorScheme
     var lastModifiedDate: Date
+    var hasCompletedOnboarding: Bool
 
-    init(activeProviderId: String? = nil, unitPreference: UnitPreference = .metric, colorScheme: ColorScheme = .system) {
+    init(
+        activeProviderId: String? = nil,
+        unitPreference: UnitPreference = .metric,
+        colorScheme: ColorScheme = .system,
+        hasCompletedOnboarding: Bool = false
+    ) {
         self.id = "user-preferences"
         self.activeProviderId = activeProviderId
         self.unitPreference = unitPreference
         self.colorScheme = colorScheme
         self.lastModifiedDate = Date()
+        self.hasCompletedOnboarding = hasCompletedOnboarding
     }
 }
 

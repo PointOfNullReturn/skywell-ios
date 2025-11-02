@@ -32,15 +32,29 @@ class SettingsViewModel: ObservableObject {
 
     // MARK: - Dependencies
 
-    private let preferencesManager: UserPreferencesManager
-    private let modelContext: ModelContext
+    private var preferencesManager: UserPreferencesManager?
+    private var modelContext: ModelContext?
 
     // MARK: - Initialization
 
     init(
-        preferencesManager: UserPreferencesManager,
-        modelContext: ModelContext
+        preferencesManager: UserPreferencesManager? = nil,
+        modelContext: ModelContext? = nil
     ) {
+        self.preferencesManager = preferencesManager
+        self.modelContext = modelContext
+        if let preferencesManager {
+            self.currentPreferences = preferencesManager.getPreferences()
+        } else {
+            self.currentPreferences = UserPreferences()
+        }
+    }
+
+    /// Configure persistence dependencies once the shared context is available
+    /// - Parameters:
+    ///   - preferencesManager: Manager backed by the shared SwiftData context
+    ///   - modelContext: Shared model context for WeatherProviderCredential updates
+    func configure(preferencesManager: UserPreferencesManager, modelContext: ModelContext) {
         self.preferencesManager = preferencesManager
         self.modelContext = modelContext
         self.currentPreferences = preferencesManager.getPreferences()
@@ -53,6 +67,12 @@ class SettingsViewModel: ObservableObject {
     ///   - name: Display name of the provider (e.g., "OpenWeatherMap")
     ///   - apiKey: API key to store securely in Keychain
     func addProvider(name: String, apiKey: String) {
+        guard let modelContext = modelContext,
+              let preferencesManager = preferencesManager else {
+            handleError("Persistence is not available")
+            return
+        }
+
         let credential = WeatherProviderCredential(
             providerName: name,
             keychainKey: UUID().uuidString
@@ -64,6 +84,7 @@ class SettingsViewModel: ObservableObject {
 
             // Save credential to SwiftData
             modelContext.insert(credential)
+            try modelContext.save()
 
             // Set as active provider if none exists
             if currentPreferences.activeProviderId == nil {
@@ -80,12 +101,19 @@ class SettingsViewModel: ObservableObject {
     /// Delete an existing provider and its credentials
     /// - Parameter credential: The provider credential to delete
     func deleteProvider(_ credential: WeatherProviderCredential) {
+        guard let modelContext = modelContext,
+              let preferencesManager = preferencesManager else {
+            handleError("Persistence is not available")
+            return
+        }
+
         do {
             // Remove from Keychain
             try KeychainManager.shared.delete(for: credential.keychainKey)
 
             // Remove from SwiftData
             modelContext.delete(credential)
+            try modelContext.save()
 
             // Reset active provider if the deleted one was active
             if currentPreferences.activeProviderId == credential.id {
@@ -110,6 +138,11 @@ class SettingsViewModel: ObservableObject {
     /// Update the active weather provider
     /// - Parameter providerId: ID of the provider to activate
     func updateActiveProvider(_ providerId: String) {
+        guard let preferencesManager = preferencesManager else {
+            handleError("Preferences are not available")
+            return
+        }
+
         do {
             try preferencesManager.updateActiveProvider(providerId)
             currentPreferences = preferencesManager.getPreferences()
@@ -123,6 +156,11 @@ class SettingsViewModel: ObservableObject {
     /// Update the temperature unit preference
     /// - Parameter unit: Unit preference (metric or imperial)
     func updateUnitPreference(_ unit: UnitPreference) {
+        guard let preferencesManager = preferencesManager else {
+            handleError("Preferences are not available")
+            return
+        }
+
         do {
             try preferencesManager.updateUnitPreference(unit)
             currentPreferences = preferencesManager.getPreferences()
@@ -134,6 +172,11 @@ class SettingsViewModel: ObservableObject {
     /// Update the color scheme preference
     /// - Parameter colorScheme: Color scheme preference (light, dark, or system)
     func updateColorScheme(_ colorScheme: ColorScheme) {
+        guard let preferencesManager = preferencesManager else {
+            handleError("Preferences are not available")
+            return
+        }
+
         do {
             try preferencesManager.updateColorScheme(colorScheme)
             currentPreferences = preferencesManager.getPreferences()
@@ -158,11 +201,13 @@ class SettingsViewModel: ObservableObject {
     /// Check if a provider is currently active
     /// - Parameter providerId: ID to check
     func isActiveProvider(_ providerId: String) -> Bool {
-        preferencesManager.isActiveProvider(providerId)
+        preferencesManager?.isActiveProvider(providerId) ?? false
     }
 
     /// Refresh preferences from persistent storage
     func refreshPreferences() {
-        currentPreferences = preferencesManager.getPreferences()
+        if let preferencesManager {
+            currentPreferences = preferencesManager.getPreferences()
+        }
     }
 }

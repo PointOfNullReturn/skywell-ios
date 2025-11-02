@@ -32,9 +32,9 @@ final class OnboardingViewModelTests: XCTestCase {
 
         locationManager = LocationManager()
         viewModel = OnboardingViewModel(
-            locationManager: locationManager,
-            preferencesManager: preferencesManager
+            locationManager: locationManager
         )
+        viewModel.configure(preferencesManager: preferencesManager)
     }
 
     override func tearDown() {
@@ -153,6 +153,8 @@ final class OnboardingViewModelTests: XCTestCase {
 
         wait(for: [expectation], timeout: 1.0)
         XCTAssertTrue(viewModel.isOnboardingComplete)
+        XCTAssertTrue(preferencesManager.hasCompletedOnboarding())
+        XCTAssertTrue(preferencesManager.hasCompletedOnboarding())
     }
 
     func testSkipOnboardingCompletesOnboarding() {
@@ -168,6 +170,8 @@ final class OnboardingViewModelTests: XCTestCase {
 
         wait(for: [expectation], timeout: 1.0)
         XCTAssertTrue(viewModel.isOnboardingComplete)
+        XCTAssertTrue(preferencesManager.hasCompletedOnboarding())
+        XCTAssertTrue(preferencesManager.hasCompletedOnboarding())
     }
 
     // MARK: - Location Permission Tests
@@ -312,6 +316,8 @@ final class OnboardingViewModelTests: XCTestCase {
         // Advance to completion
         viewModel.advanceStep()
         XCTAssertEqual(viewModel.currentStep, .completion)
+        XCTAssertTrue(viewModel.isOnboardingComplete)
+        XCTAssertTrue(preferencesManager.hasCompletedOnboarding())
     }
 
     func testSkipFromMiddleOfOnboarding() {
@@ -327,6 +333,7 @@ final class OnboardingViewModelTests: XCTestCase {
 
         wait(for: [expectation], timeout: 1.0)
         XCTAssertTrue(viewModel.isOnboardingComplete)
+        XCTAssertTrue(preferencesManager.hasCompletedOnboarding())
     }
 
     func testBacktrackingThroughSteps() {
