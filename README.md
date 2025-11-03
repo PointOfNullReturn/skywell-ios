@@ -89,6 +89,12 @@ Run tests with:
 xcodebuild test -scheme skywell -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
+## Product Images
+
+![Skywell home screen](assets/product_images/skywell01.png)
+![Skywell settings screen](assets/product_images/skywell02.png)
+![Skywell add provider screen](assets/product_images/skywell03.png)
+
 ## User Preferences
 
 ### Temperature Units
