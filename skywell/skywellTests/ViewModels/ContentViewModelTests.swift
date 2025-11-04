@@ -60,6 +60,7 @@ final class ContentViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.displayTemperature, "—")
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°C")
         XCTAssertFalse(viewModel.isLoading)
+        XCTAssertFalse(viewModel.hasLoadedWeather)
         XCTAssertNil(viewModel.errorMessage)
         XCTAssertFalse(viewModel.showError)
     }
@@ -190,6 +191,7 @@ final class ContentViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°C")
         // After setting weather, display should update
         XCTAssertNotEqual(viewModel.displayTemperature, "—")
+        XCTAssertTrue(viewModel.hasLoadedWeather)
     }
 
     func testDisplayTemperatureImperialUnits() {
@@ -211,6 +213,7 @@ final class ContentViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°F")
         // Verify conversion happened (0°C = 32°F)
         XCTAssertNotEqual(viewModel.displayTemperature, "—")
+        XCTAssertTrue(viewModel.hasLoadedWeather)
     }
 
     func testDisplayTemperatureNegativeCelsius() {
@@ -228,6 +231,7 @@ final class ContentViewModelTests: XCTestCase {
 
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°C")
         XCTAssertNotEqual(viewModel.displayTemperature, "—")
+        XCTAssertTrue(viewModel.hasLoadedWeather)
     }
 
     func testDisplayTemperatureDecimalValues() {
@@ -245,6 +249,7 @@ final class ContentViewModelTests: XCTestCase {
 
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°C")
         XCTAssertNotEqual(viewModel.displayTemperature, "—")
+        XCTAssertTrue(viewModel.hasLoadedWeather)
     }
 
     func testDisplayTemperatureWhenWeatherIsNil() {
@@ -272,6 +277,7 @@ final class ContentViewModelTests: XCTestCase {
         // 100°C = 212°F
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°F")
         XCTAssertNotEqual(viewModel.displayTemperature, "—")
+        XCTAssertTrue(viewModel.hasLoadedWeather)
     }
 
     // MARK: - Weather Information Display Tests

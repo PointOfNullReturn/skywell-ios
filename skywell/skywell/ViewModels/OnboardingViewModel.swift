@@ -66,11 +66,13 @@ class OnboardingViewModel: ObservableObject {
     @Published var locationPermissionStatus: LocationStatus = .notDetermined
     @Published var hasApiKey = false
     @Published var showAddProvider = false
+    @Published var providerCredentials: [WeatherProviderCredential] = []
 
     // MARK: - Dependencies
 
     private let locationManager: LocationManager
     private var preferencesManager: UserPreferencesManager?
+    private var modelContext: ModelContext?
 
     // MARK: - Internal State
 
@@ -88,9 +90,22 @@ class OnboardingViewModel: ObservableObject {
 
     /// Configure persistence dependencies once the view's modelContext is available
     /// - Parameter preferencesManager: Manager backed by the shared SwiftData context
-    func configure(preferencesManager: UserPreferencesManager) {
+    func configure(preferencesManager: UserPreferencesManager, modelContext: ModelContext) {
         self.preferencesManager = preferencesManager
+        self.modelContext = modelContext
         checkApiKeyStatus()
+        refreshProviderCredentials()
+
+        if !preferencesManager.hasCompletedOnboarding() {
+            let hasStoredProviders = preferencesManager.getActiveProviderId() != nil || !providerCredentials.isEmpty
+            if hasStoredProviders {
+                if preferencesManager.getActiveProviderId() == nil, let firstCredential = providerCredentials.first {
+                    try? preferencesManager.updateActiveProvider(firstCredential.id)
+                    NotificationCenter.default.post(name: NSNotification.Name("ActiveProviderChanged"), object: nil)
+                }
+                skipOnboarding()
+            }
+        }
     }
 
     // MARK: - Setup
@@ -155,10 +170,11 @@ class OnboardingViewModel: ObservableObject {
 
     /// Check if any API key is configured
     private func checkApiKeyStatus() {
-        guard let preferences = preferencesManager?.getPreferences() else {
-            hasApiKey = false
+        hasApiKey = !providerCredentials.isEmpty
+        if hasApiKey {
             return
         }
+        guard let preferences = preferencesManager?.getPreferences() else { return }
         hasApiKey = preferences.activeProviderId != nil
     }
 
@@ -194,6 +210,59 @@ class OnboardingViewModel: ObservableObject {
     }
 
     // MARK: - Completion
+
+    /// Refresh provider credentials from persistence layer
+    func refreshProviderCredentials() {
+        guard let modelContext else {
+            providerCredentials = []
+            hasApiKey = false
+            return
+        }
+
+        let descriptor = FetchDescriptor<WeatherProviderCredential>(
+            sortBy: [SortDescriptor(\.createdDate)]
+        )
+
+        if let results = try? modelContext.fetch(descriptor) {
+            providerCredentials = results
+        } else {
+            providerCredentials = []
+        }
+
+        hasApiKey = !providerCredentials.isEmpty
+    }
+
+    /// Add a new provider credential and mark onboarding progress
+    func addProvider(name: String, apiKey: String) {
+        guard let preferencesManager, let modelContext else {
+            handleError("Persistence is not available")
+            return
+        }
+
+        let credential = WeatherProviderCredential(
+            providerName: name,
+            keychainKey: UUID().uuidString
+        )
+
+        do {
+            try KeychainManager.shared.save(apiKey, for: credential.keychainKey)
+            modelContext.insert(credential)
+            try modelContext.save()
+
+            refreshProviderCredentials()
+
+            if preferencesManager.getActiveProviderId() == nil {
+                try preferencesManager.updateActiveProvider(credential.id)
+                NotificationCenter.default.post(name: NSNotification.Name("ActiveProviderChanged"), object: nil)
+            }
+
+            hasApiKey = true
+            showAddProvider = false
+        } catch {
+            try? KeychainManager.shared.delete(for: credential.keychainKey)
+            handleError("Failed to save provider: \(error.localizedDescription)")
+        }
+    }
 
     /// Mark onboarding as complete
     private func completeOnboarding() {

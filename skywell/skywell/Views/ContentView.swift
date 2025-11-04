@@ -97,7 +97,10 @@ struct ContentView: View {
         } else if viewModel.isLoading {
             return AnyView(ProgressView())
         } else if viewModel.currentWeather != nil {
-            return AnyView(weatherCard)
+            return AnyView(weatherCard
+                .opacity(viewModel.hasLoadedWeather ? 1 : 0)
+                .animation(.easeIn(duration: 0.3), value: viewModel.hasLoadedWeather)
+            )
         } else {
             return AnyView(
                 VStack(spacing: 12) {

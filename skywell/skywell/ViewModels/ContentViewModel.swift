@@ -25,11 +25,16 @@ import SwiftData
 class ContentViewModel: ObservableObject {
     // MARK: - Published Properties (for SwiftUI reactivity)
 
-    @Published var currentWeather: Weather?
+    @Published var currentWeather: Weather? {
+        didSet {
+            updateDisplayTemperature()
+        }
+    }
     @Published var displayTemperature: String = "—"
     @Published var displayTemperatureUnit: String = "°C"
     @Published var locationCity: String?
     @Published var isLoading = false
+    @Published var hasLoadedWeather = false
     @Published var errorMessage: String?
     @Published var showError = false
 
@@ -96,14 +101,22 @@ class ContentViewModel: ObservableObject {
         // Observe unit preference changes
         NotificationCenter.default.publisher(for: NSNotification.Name("UserPreferencesChanged"))
             .sink { [weak self] _ in
-                self?.updateDisplayTemperature()
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.refreshPreferences()
+                    self.updateDisplayTemperature()
+                }
             }
             .store(in: &cancellables)
 
         // Observe active provider changes
         NotificationCenter.default.publisher(for: NSNotification.Name("ActiveProviderChanged"))
             .sink { [weak self] _ in
-                self?.configureActiveProvider()
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.refreshPreferences()
+                    self.configureActiveProvider()
+                }
             }
             .store(in: &cancellables)
     }
@@ -169,9 +182,10 @@ class ContentViewModel: ObservableObject {
                 self?.isLoading = false
                 if let weather = weather {
                     self?.currentWeather = weather
-                    self?.updateDisplayTemperature()
+                    self?.hasLoadedWeather = true
                 } else {
                     self?.handleError("Failed to fetch weather data")
+                    self?.hasLoadedWeather = false
                 }
             }
         }
@@ -212,6 +226,11 @@ class ContentViewModel: ObservableObject {
 
         // Format to 1 decimal place
         displayTemperature = String(format: "%.1f", tempValue)
+    }
+
+    /// Refresh cached preferences state if available
+    private func refreshPreferences() {
+        _ = preferencesManager?.getPreferences()
     }
 
     private func fetchCredential(for id: String) throws -> WeatherProviderCredential {

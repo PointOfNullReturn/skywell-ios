@@ -16,7 +16,6 @@ import SwiftData
 
 struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var credentials: [WeatherProviderCredential]
 
     @StateObject private var viewModel = OnboardingViewModel(locationManager: LocationManager())
 
@@ -39,7 +38,7 @@ struct OnboardingView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .sheet(isPresented: $viewModel.showAddProvider) {
-            AddProviderSheet(isPresented: $viewModel.showAddProvider, onAdd: handleAddProvider)
+            AddProviderSheet(isPresented: $viewModel.showAddProvider, onAdd: viewModel.addProvider)
         }
         .onAppear(perform: configurePreferencesManager)
         .alert("Error", isPresented: $viewModel.showError) {
@@ -148,7 +147,7 @@ struct OnboardingView: View {
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
 
-            if credentials.isEmpty {
+            if viewModel.providerCredentials.isEmpty {
                 Button(action: { viewModel.showAddProvider = true }) {
                     HStack {
                         Image(systemName: "plus.circle.fill")
@@ -162,7 +161,7 @@ struct OnboardingView: View {
                 }
             } else {
                 VStack(alignment: .leading, spacing: 12) {
-                    ForEach(credentials, id: \.id) { credential in
+                    ForEach(viewModel.providerCredentials, id: \.id) { credential in
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
@@ -243,45 +242,9 @@ struct OnboardingView: View {
         }
     }
 
-    private func handleAddProvider(name: String, apiKey: String) {
-        let credential = WeatherProviderCredential(providerName: name, keychainKey: UUID().uuidString)
-
-        do {
-            try KeychainManager.shared.save(apiKey, for: credential.keychainKey)
-            modelContext.insert(credential)
-            try modelContext.save()
-
-            let preferencesManager = UserPreferencesManager(modelContext: modelContext)
-            if preferencesManager.getActiveProviderId() == nil {
-                try preferencesManager.updateActiveProvider(credential.id)
-                NotificationCenter.default.post(name: NSNotification.Name("ActiveProviderChanged"), object: nil)
-            }
-
-            // Update viewModel's API key status
-            viewModel.hasApiKey = true
-        } catch {
-            viewModel.errorMessage = "Failed to save provider: \(error.localizedDescription)"
-            viewModel.showError = true
-        }
-    }
-
     private func configurePreferencesManager() {
         let preferencesManager = UserPreferencesManager(modelContext: modelContext)
-        viewModel.configure(preferencesManager: preferencesManager)
-
-        // Sync hasApiKey status with existing credentials
-        viewModel.hasApiKey = !credentials.isEmpty
-
-        if !preferencesManager.hasCompletedOnboarding() {
-            let hasStoredProviders = preferencesManager.getActiveProviderId() != nil || !credentials.isEmpty
-            if hasStoredProviders {
-                if preferencesManager.getActiveProviderId() == nil, let firstCredential = credentials.first {
-                    try? preferencesManager.updateActiveProvider(firstCredential.id)
-                    NotificationCenter.default.post(name: NSNotification.Name("ActiveProviderChanged"), object: nil)
-                }
-                viewModel.skipOnboarding()
-            }
-        }
+        viewModel.configure(preferencesManager: preferencesManager, modelContext: modelContext)
     }
 }
 

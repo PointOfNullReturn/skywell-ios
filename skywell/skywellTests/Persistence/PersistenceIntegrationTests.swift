@@ -276,13 +276,14 @@ final class PersistenceIntegrationTests: XCTestCase {
 
     func testCreatedDateIsSetOnInit() throws {
         let credentialID = UUID().uuidString
+        let beforeInit = Date()
         let credential = WeatherProviderCredential(
             id: credentialID,
             providerName: "OpenWeatherMap",
             keychainKey: "key"
         )
+        let afterInit = Date()
 
-        let beforeInsert = Date()
         modelContext.insert(credential)
         try modelContext.save()
         let afterInsert = Date()
@@ -294,8 +295,8 @@ final class PersistenceIntegrationTests: XCTestCase {
 
         XCTAssertNotNil(fetched.first?.createdDate)
         if let createdDate = fetched.first?.createdDate {
-            XCTAssertGreaterThanOrEqual(createdDate, beforeInsert)
-            XCTAssertLessThanOrEqual(createdDate, afterInsert)
+            XCTAssertGreaterThanOrEqual(createdDate, beforeInit)
+            XCTAssertLessThanOrEqual(createdDate, max(afterInit, afterInsert))
         }
     }
 
@@ -305,22 +306,31 @@ final class PersistenceIntegrationTests: XCTestCase {
             unitPreference: .metric
         )
 
-        let createdDate = prefs.lastModifiedDate
-
         modelContext.insert(prefs)
         try modelContext.save()
 
         // Wait a tiny bit then update
-        Thread.sleep(forTimeInterval: 0.01)
+        Thread.sleep(forTimeInterval: 0.1)
 
         let descriptor = FetchDescriptor<UserPreferences>(
             predicate: #Predicate { $0.id == "user-preferences" }
         )
-        var fetched = try modelContext.fetch(descriptor)
-        fetched.first?.activeProviderId = "provider-2"
-        try modelContext.save()
+        let fetched = try modelContext.fetch(descriptor)
+        guard let storedPreferences = fetched.first else {
+            XCTFail("Expected stored preferences")
+            return
+        }
+
+        let originalLastModified = storedPreferences.lastModifiedDate
+
+        let preferencesManager = UserPreferencesManager(modelContext: modelContext)
+        try preferencesManager.updateActiveProvider("provider-2")
 
         let updated = try modelContext.fetch(descriptor)
-        XCTAssertGreaterThan(updated.first?.lastModifiedDate ?? Date(), createdDate)
+        let updatedLastModified = updated.first?.lastModifiedDate
+        XCTAssertNotNil(updatedLastModified)
+        if let updatedLastModified {
+            XCTAssertGreaterThan(updatedLastModified, originalLastModified)
+        }
     }
 }

@@ -26,7 +26,11 @@ final class OnboardingViewModelTests: XCTestCase {
     override func setUp() {
         super.setUp()
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: UserPreferences.self, configurations: config)
+        let container = try! ModelContainer(
+            for: UserPreferences.self,
+            WeatherProviderCredential.self,
+            configurations: config
+        )
         modelContext = ModelContext(container)
         preferencesManager = UserPreferencesManager(modelContext: modelContext)
 
@@ -34,7 +38,7 @@ final class OnboardingViewModelTests: XCTestCase {
         viewModel = OnboardingViewModel(
             locationManager: locationManager
         )
-        viewModel.configure(preferencesManager: preferencesManager)
+        viewModel.configure(preferencesManager: preferencesManager, modelContext: modelContext)
     }
 
     override func tearDown() {
