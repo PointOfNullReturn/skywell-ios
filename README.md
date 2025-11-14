@@ -4,7 +4,7 @@ A modern iOS weather application with OpenWeatherMap integration and customizabl
 
 ## Features
 
-- **Weather Provider Integration**: OpenWeatherMap adapter with extensible architecture for additional providers
+- **Weather Provider Integration**: OpenWeatherMap adapters (standard current weather + One Call 3.0) with extensible architecture for additional providers
 - **Dark Mode Support**: Choose between light, dark, or system default appearance
 - **Unit Preferences**: Switch between metric (°C) and imperial (°F) temperature units
 - **Location-Based Weather**: Automatic location detection and weather updates

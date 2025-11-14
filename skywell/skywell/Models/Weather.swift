@@ -15,9 +15,14 @@ import Foundation
 
 struct Weather: Equatable {
     let city: String
-    let temperature: Double
     let condition: String
-    let windSpeed: Double
-    let humidity: Int
     let icon: String?
+    let temperature: Double
+    let feelsLike: Double
+    let pressure: Int
+    let humidity: Int
+    let windSpeed: Double
+    let windSpeedDegree: Int
+    let windGust: Double
+    let cloudCover: Int
 }

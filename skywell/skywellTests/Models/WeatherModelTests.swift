@@ -21,15 +21,21 @@ final class WeatherModelTests: XCTestCase {
     func testWeatherInitialization() {
         let weather = Weather(
             city: "New York",
-            temperature: 72.5,
             condition: "Sunny",
-            windSpeed: 10.0,
+            icon: "01d",
+            temperature: 72.5,
+            feelsLike: 72.5,
+            pressure: 1013,
             humidity: 65,
-            icon: "01d"
+            windSpeed: 10.0,
+            windSpeedDegree: 180,
+            windGust: 12.0,
+            cloudCover: 0
         )
 
         XCTAssertEqual(weather.city, "New York")
         XCTAssertEqual(weather.temperature, 72.5)
+        XCTAssertEqual(weather.feelsLike, 72.5)
         XCTAssertEqual(weather.condition, "Sunny")
         XCTAssertEqual(weather.windSpeed, 10.0)
         XCTAssertEqual(weather.humidity, 65)
@@ -39,34 +45,50 @@ final class WeatherModelTests: XCTestCase {
     func testWeatherWithoutIcon() {
         let weather = Weather(
             city: "Los Angeles",
-            temperature: 80.0,
             condition: "Clear",
-            windSpeed: 5.0,
+            icon: nil,
+            temperature: 80.0,
+            feelsLike: 80.0,
+            pressure: 1013,
             humidity: 50,
-            icon: nil
+            windSpeed: 5.0,
+            windSpeedDegree: 90,
+            windGust: 6.0,
+            cloudCover: 0
         )
 
         XCTAssertNil(weather.icon)
         XCTAssertEqual(weather.city, "Los Angeles")
+        XCTAssertEqual(weather.feelsLike, 80.0)
     }
 
     func testWeatherEquality() {
         let weather1 = Weather(
             city: "Chicago",
-            temperature: 65.0,
             condition: "Cloudy",
-            windSpeed: 8.0,
+            icon: "04d",
+            temperature: 65.0,
+            feelsLike: 65.0,
+            pressure: 1013,
             humidity: 70,
-            icon: "04d"
+            windSpeed: 8.0,
+            windSpeedDegree: 180,
+            windGust: 10.0,
+            cloudCover: 50
         )
 
         let weather2 = Weather(
             city: "Chicago",
-            temperature: 65.0,
             condition: "Cloudy",
-            windSpeed: 8.0,
+            icon: "04d",
+            temperature: 65.0,
+            feelsLike: 65.0,
+            pressure: 1013,
             humidity: 70,
-            icon: "04d"
+            windSpeed: 8.0,
+            windSpeedDegree: 180,
+            windGust: 10.0,
+            cloudCover: 50
         )
 
         XCTAssertEqual(weather1, weather2)
@@ -75,20 +97,30 @@ final class WeatherModelTests: XCTestCase {
     func testWeatherInequality() {
         let weather1 = Weather(
             city: "Boston",
-            temperature: 55.0,
             condition: "Rainy",
-            windSpeed: 12.0,
+            icon: "10d",
+            temperature: 55.0,
+            feelsLike: 55.0,
+            pressure: 1013,
             humidity: 80,
-            icon: "10d"
+            windSpeed: 12.0,
+            windSpeedDegree: 180,
+            windGust: 15.0,
+            cloudCover: 100
         )
 
         let weather2 = Weather(
             city: "Boston",
-            temperature: 56.0,  // Different temperature
             condition: "Rainy",
-            windSpeed: 12.0,
+            icon: "10d",
+            temperature: 56.0,  // Different temperature
+            feelsLike: 56.0,
+            pressure: 1013,
             humidity: 80,
-            icon: "10d"
+            windSpeed: 12.0,
+            windSpeedDegree: 180,
+            windGust: 15.0,
+            cloudCover: 100
         )
 
         XCTAssertNotEqual(weather1, weather2)
@@ -97,11 +129,16 @@ final class WeatherModelTests: XCTestCase {
     func testWeatherWithNegativeTemperature() {
         let weather = Weather(
             city: "Anchorage",
-            temperature: -15.0,
             condition: "Snow",
-            windSpeed: 20.0,
+            icon: "13d",
+            temperature: -15.0,
+            feelsLike: -15.0,
+            pressure: 1013,
             humidity: 85,
-            icon: "13d"
+            windSpeed: 20.0,
+            windSpeedDegree: 270,
+            windGust: 25.0,
+            cloudCover: 100
         )
 
         XCTAssertEqual(weather.temperature, -15.0)
@@ -110,11 +147,16 @@ final class WeatherModelTests: XCTestCase {
     func testWeatherWithZeroTemperature() {
         let weather = Weather(
             city: "Denver",
-            temperature: 0.0,
             condition: "Clear",
-            windSpeed: 3.0,
+            icon: "01d",
+            temperature: 0.0,
+            feelsLike: 0.0,
+            pressure: 1013,
             humidity: 40,
-            icon: "01d"
+            windSpeed: 3.0,
+            windSpeedDegree: 90,
+            windGust: 4.0,
+            cloudCover: 0
         )
 
         XCTAssertEqual(weather.temperature, 0.0)

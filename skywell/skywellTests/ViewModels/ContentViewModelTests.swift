@@ -59,6 +59,7 @@ final class ContentViewModelTests: XCTestCase {
         XCTAssertNil(viewModel.currentWeather)
         XCTAssertEqual(viewModel.displayTemperature, "—")
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°C")
+        XCTAssertEqual(viewModel.displayFeelsLike, "—")
         XCTAssertFalse(viewModel.isLoading)
         XCTAssertFalse(viewModel.hasLoadedWeather)
         XCTAssertNil(viewModel.errorMessage)
@@ -100,11 +101,16 @@ final class ContentViewModelTests: XCTestCase {
     func testFetchWeatherWithValidCoordinates() {
         let weather = Weather(
             city: "New York",
-            temperature: 20.0,
             condition: "Sunny",
-            windSpeed: 5.0,
+            icon: "01d",
+            temperature: 20.0,
+            feelsLike: 20.0,
+            pressure: 1013,
             humidity: 60,
-            icon: "01d"
+            windSpeed: 5.0,
+            windSpeedDegree: 180,
+            windGust: 6.0,
+            cloudCover: 0
         )
 
         let mockProvider = MockWeatherProvider()
@@ -175,11 +181,16 @@ final class ContentViewModelTests: XCTestCase {
     func testDisplayTemperatureMetricUnits() {
         let weather = Weather(
             city: "Test City",
-            temperature: 20.0,
             condition: "Clear",
-            windSpeed: 5.0,
+            icon: nil,
+            temperature: 20.0,
+            feelsLike: 20.0,
+            pressure: 1013,
             humidity: 50,
-            icon: nil
+            windSpeed: 5.0,
+            windSpeedDegree: 180,
+            windGust: 5.5,
+            cloudCover: 0
         )
 
         viewModel.currentWeather = weather
@@ -189,19 +200,24 @@ final class ContentViewModelTests: XCTestCase {
         viewModel.currentWeather = weather
 
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°C")
-        // After setting weather, display should update
-        XCTAssertNotEqual(viewModel.displayTemperature, "—")
+        XCTAssertEqual(viewModel.displayTemperature, "20")
+        XCTAssertEqual(viewModel.displayFeelsLike, "20")
         XCTAssertTrue(viewModel.hasLoadedWeather)
     }
 
     func testDisplayTemperatureImperialUnits() {
         let weather = Weather(
             city: "Test City",
-            temperature: 0.0,
             condition: "Clear",
-            windSpeed: 5.0,
+            icon: nil,
+            temperature: 0.0,
+            feelsLike: 0.0,
+            pressure: 1013,
             humidity: 50,
-            icon: nil
+            windSpeed: 5.0,
+            windSpeedDegree: 180,
+            windGust: 5.5,
+            cloudCover: 0
         )
 
         viewModel.currentWeather = weather
@@ -211,61 +227,79 @@ final class ContentViewModelTests: XCTestCase {
         viewModel.currentWeather = weather
 
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°F")
-        // Verify conversion happened (0°C = 32°F)
-        XCTAssertNotEqual(viewModel.displayTemperature, "—")
+        XCTAssertEqual(viewModel.displayTemperature, "32")
+        XCTAssertEqual(viewModel.displayFeelsLike, "32")
         XCTAssertTrue(viewModel.hasLoadedWeather)
     }
 
     func testDisplayTemperatureNegativeCelsius() {
         let weather = Weather(
             city: "Test City",
-            temperature: -10.0,
             condition: "Cold",
-            windSpeed: 5.0,
+            icon: nil,
+            temperature: -10.0,
+            feelsLike: -10.0,
+            pressure: 1013,
             humidity: 50,
-            icon: nil
+            windSpeed: 5.0,
+            windSpeedDegree: 0,
+            windGust: 6.0,
+            cloudCover: 50
         )
 
         viewModel.currentWeather = weather
         try? preferencesManager.updateUnitPreference(.metric)
 
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°C")
-        XCTAssertNotEqual(viewModel.displayTemperature, "—")
+        XCTAssertEqual(viewModel.displayTemperature, "-10")
+        XCTAssertEqual(viewModel.displayFeelsLike, "-10")
         XCTAssertTrue(viewModel.hasLoadedWeather)
     }
 
     func testDisplayTemperatureDecimalValues() {
         let weather = Weather(
             city: "Test City",
-            temperature: 15.5,
             condition: "Mild",
-            windSpeed: 5.0,
+            icon: nil,
+            temperature: 15.5,
+            feelsLike: 15.5,
+            pressure: 1013,
             humidity: 50,
-            icon: nil
+            windSpeed: 5.0,
+            windSpeedDegree: 90,
+            windGust: 5.5,
+            cloudCover: 0
         )
 
         viewModel.currentWeather = weather
         try? preferencesManager.updateUnitPreference(.metric)
 
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°C")
-        XCTAssertNotEqual(viewModel.displayTemperature, "—")
+        XCTAssertEqual(viewModel.displayTemperature, "16")
+        XCTAssertEqual(viewModel.displayFeelsLike, "16")
         XCTAssertTrue(viewModel.hasLoadedWeather)
     }
 
     func testDisplayTemperatureWhenWeatherIsNil() {
         viewModel.currentWeather = nil
         XCTAssertEqual(viewModel.displayTemperature, "—")
+        XCTAssertEqual(viewModel.displayFeelsLike, "—")
     }
 
     func testConversionFormula() {
         // Test the Celsius to Fahrenheit conversion: (C × 9/5) + 32
         let weather = Weather(
             city: "Test",
-            temperature: 100.0,
             condition: "Hot",
-            windSpeed: 0,
+            icon: nil,
+            temperature: 100.0,
+            feelsLike: 100.0,
+            pressure: 1013,
             humidity: 0,
-            icon: nil
+            windSpeed: 0,
+            windSpeedDegree: 0,
+            windGust: 0.0,
+            cloudCover: 0
         )
 
         viewModel.currentWeather = weather
@@ -276,20 +310,85 @@ final class ContentViewModelTests: XCTestCase {
 
         // 100°C = 212°F
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°F")
-        XCTAssertNotEqual(viewModel.displayTemperature, "—")
+        XCTAssertEqual(viewModel.displayTemperature, "212")
+        XCTAssertEqual(viewModel.displayFeelsLike, "212")
         XCTAssertTrue(viewModel.hasLoadedWeather)
     }
 
     // MARK: - Weather Information Display Tests
 
+    func testGetFeelsLikeWithoutWeather() {
+        XCTAssertEqual(viewModel.getFeelsLike(), "—")
+    }
+
+    func testGetFeelsLikeWithWeatherMetric() {
+        let weather = Weather(
+            city: "Test",
+            condition: "Partly Cloudy",
+            icon: nil,
+            temperature: 20.0,
+            feelsLike: 18.5,
+            pressure: 1013,
+            humidity: 50,
+            windSpeed: 5.0,
+            windSpeedDegree: 180,
+            windGust: 6.0,
+            cloudCover: 50
+        )
+
+        viewModel.currentWeather = weather
+
+        let expectation = XCTestExpectation(description: "Feels like metric update")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
+
+        XCTAssertEqual(viewModel.getFeelsLike(), "19°C")
+    }
+
+    func testGetFeelsLikeWithWeatherImperial() {
+        try? preferencesManager.updateUnitPreference(.imperial)
+        defer { try? preferencesManager.updateUnitPreference(.metric) }
+
+        let weather = Weather(
+            city: "Test",
+            condition: "Partly Cloudy",
+            icon: nil,
+            temperature: 20.0,
+            feelsLike: 20.0,
+            pressure: 1013,
+            humidity: 50,
+            windSpeed: 5.0,
+            windSpeedDegree: 180,
+            windGust: 6.0,
+            cloudCover: 50
+        )
+
+        viewModel.currentWeather = weather
+
+        let expectation = XCTestExpectation(description: "Feels like imperial update")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
+
+        XCTAssertEqual(viewModel.getFeelsLike(), "68°F")
+    }
+
     func testGetWeatherConditionWithWeather() {
         let weather = Weather(
             city: "Test",
-            temperature: 20.0,
             condition: "Partly Cloudy",
-            windSpeed: 5.0,
+            icon: nil,
+            temperature: 20.0,
+            feelsLike: 20.0,
+            pressure: 1013,
             humidity: 50,
-            icon: nil
+            windSpeed: 5.0,
+            windSpeedDegree: 180,
+            windGust: 6.0,
+            cloudCover: 50
         )
 
         viewModel.currentWeather = weather
@@ -304,11 +403,16 @@ final class ContentViewModelTests: XCTestCase {
     func testGetHumidityWithWeather() {
         let weather = Weather(
             city: "Test",
-            temperature: 20.0,
             condition: "Clear",
-            windSpeed: 5.0,
+            icon: nil,
+            temperature: 20.0,
+            feelsLike: 20.0,
+            pressure: 1013,
             humidity: 75,
-            icon: nil
+            windSpeed: 5.0,
+            windSpeedDegree: 180,
+            windGust: 6.0,
+            cloudCover: 0
         )
 
         viewModel.currentWeather = weather
@@ -320,23 +424,116 @@ final class ContentViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.getHumidity(), "—")
     }
 
-    func testGetWindSpeedWithWeather() {
+    func testGetWindSpeedMetric() {
         let weather = Weather(
             city: "Test",
-            temperature: 20.0,
             condition: "Clear",
-            windSpeed: 5.5,
+            icon: nil,
+            temperature: 20.0,
+            feelsLike: 20.0,
+            pressure: 1013,
             humidity: 50,
-            icon: nil
+            windSpeed: 5.5,
+            windSpeedDegree: 180,
+            windGust: 6.5,
+            cloudCover: 0
         )
 
         viewModel.currentWeather = weather
         XCTAssertEqual(viewModel.getWindSpeed(), "5.5 m/s")
     }
 
+    func testGetWindSpeedImperial() {
+        let preferences = UserPreferences(activeProviderId: nil, unitPreference: .imperial, colorScheme: .system, hasCompletedOnboarding: true)
+        modelContext.insert(preferences)
+        let preferencesManager = UserPreferencesManager(modelContext: modelContext)
+        viewModel.configure(preferencesManager: preferencesManager, modelContext: modelContext)
+
+        let weather = Weather(
+            city: "Test",
+            condition: "Clear",
+            icon: nil,
+            temperature: 20.0,
+            feelsLike: 20.0,
+            pressure: 1013,
+            humidity: 50,
+            windSpeed: 5.5,
+            windSpeedDegree: 180,
+            windGust: 6.5,
+            cloudCover: 0
+        )
+
+        viewModel.currentWeather = weather
+        // 5.5 m/s ≈ 12.3 mph
+        XCTAssertEqual(viewModel.getWindSpeed(), "12.3 mph")
+    }
+
     func testGetWindSpeedWithoutWeather() {
         viewModel.currentWeather = nil
         XCTAssertEqual(viewModel.getWindSpeed(), "—")
+    }
+
+    func testGetWindGustMetric() {
+        let weather = Weather(
+            city: "Test",
+            condition: "Clear",
+            icon: nil,
+            temperature: 20.0,
+            feelsLike: 20.0,
+            pressure: 1013,
+            humidity: 50,
+            windSpeed: 5.5,
+            windSpeedDegree: 180,
+            windGust: 6.5,
+            cloudCover: 0
+        )
+
+        viewModel.currentWeather = weather
+        XCTAssertEqual(viewModel.getWindGust(), "6.5 m/s")
+    }
+
+    func testGetWindGustImperial() {
+        let preferences = UserPreferences(activeProviderId: nil, unitPreference: .imperial, colorScheme: .system, hasCompletedOnboarding: true)
+        modelContext.insert(preferences)
+        let preferencesManager = UserPreferencesManager(modelContext: modelContext)
+        viewModel.configure(preferencesManager: preferencesManager, modelContext: modelContext)
+
+        let weather = Weather(
+            city: "Test",
+            condition: "Clear",
+            icon: nil,
+            temperature: 20.0,
+            feelsLike: 20.0,
+            pressure: 1013,
+            humidity: 50,
+            windSpeed: 5.5,
+            windSpeedDegree: 180,
+            windGust: 6.5,
+            cloudCover: 0
+        )
+
+        viewModel.currentWeather = weather
+        // 6.5 m/s ≈ 14.5 mph
+        XCTAssertEqual(viewModel.getWindGust(), "14.5 mph")
+    }
+
+    func testGetWindGustZero() {
+        let weather = Weather(
+            city: "Test",
+            condition: "Clear",
+            icon: nil,
+            temperature: 20.0,
+            feelsLike: 20.0,
+            pressure: 1013,
+            humidity: 50,
+            windSpeed: 5.5,
+            windSpeedDegree: 180,
+            windGust: 0.0,
+            cloudCover: 0
+        )
+
+        viewModel.currentWeather = weather
+        XCTAssertEqual(viewModel.getWindGust(), "—")
     }
 
     // MARK: - Location Display Tests
@@ -408,11 +605,16 @@ final class ContentViewModelTests: XCTestCase {
     func testCurrentWeatherUpdatesDisplay() {
         let weather = Weather(
             city: "London",
-            temperature: 15.0,
             condition: "Rainy",
-            windSpeed: 10.0,
+            icon: "10d",
+            temperature: 15.0,
+            feelsLike: 15.0,
+            pressure: 1013,
             humidity: 80,
-            icon: "10d"
+            windSpeed: 10.0,
+            windSpeedDegree: 180,
+            windGust: 12.0,
+            cloudCover: 100
         )
 
         viewModel.currentWeather = weather
@@ -430,11 +632,16 @@ final class ContentViewModelTests: XCTestCase {
     func testUnitPreferenceChangeUpdatesDisplay() {
         let weather = Weather(
             city: "Test",
-            temperature: 0.0,
             condition: "Clear",
-            windSpeed: 5.0,
+            icon: nil,
+            temperature: 0.0,
+            feelsLike: 0.0,
+            pressure: 1013,
             humidity: 50,
-            icon: nil
+            windSpeed: 5.0,
+            windSpeedDegree: 180,
+            windGust: 5.5,
+            cloudCover: 0
         )
 
         viewModel.currentWeather = weather
@@ -442,6 +649,7 @@ final class ContentViewModelTests: XCTestCase {
         // Start with metric
         try? preferencesManager.updateUnitPreference(.metric)
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°C")
+        XCTAssertEqual(viewModel.displayFeelsLike, "0")
 
         // Switch to imperial
         try? preferencesManager.updateUnitPreference(.imperial)
@@ -451,6 +659,7 @@ final class ContentViewModelTests: XCTestCase {
 
         // Verify conversion happened
         XCTAssertEqual(viewModel.displayTemperatureUnit, "°F")
+        XCTAssertEqual(viewModel.displayFeelsLike, "32")
     }
 
     func testLoadingStateManagement() {
@@ -468,11 +677,16 @@ final class ContentViewModelTests: XCTestCase {
     func testCompleteWeatherFetchWorkflow() {
         let weather = Weather(
             city: "Paris",
-            temperature: 18.0,
             condition: "Cloudy",
-            windSpeed: 8.0,
+            icon: "02d",
+            temperature: 18.0,
+            feelsLike: 18.0,
+            pressure: 1013,
             humidity: 65,
-            icon: "02d"
+            windSpeed: 8.0,
+            windSpeedDegree: 180,
+            windGust: 9.0,
+            cloudCover: 50
         )
 
         let mockProvider = MockWeatherProvider()
@@ -510,11 +724,16 @@ final class ContentViewModelTests: XCTestCase {
     func testMultipleTemperatureUnitToggles() {
         let weather = Weather(
             city: "Test",
-            temperature: 20.0,
             condition: "Clear",
-            windSpeed: 5.0,
+            icon: nil,
+            temperature: 20.0,
+            feelsLike: 20.0,
+            pressure: 1013,
             humidity: 50,
-            icon: nil
+            windSpeed: 5.0,
+            windSpeedDegree: 180,
+            windGust: 5.5,
+            cloudCover: 0
         )
 
         viewModel.currentWeather = weather

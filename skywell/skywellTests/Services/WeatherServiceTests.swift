@@ -38,11 +38,16 @@ final class WeatherServiceTests: XCTestCase {
         let mockProvider = MockWeatherProvider()
         let expectedWeather = Weather(
             city: "New York",
-            temperature: 72.0,
             condition: "Sunny",
-            windSpeed: 5.0,
+            icon: "01d",
+            temperature: 72.0,
+            feelsLike: 73.0,
+            pressure: 1013,
             humidity: 60,
-            icon: "01d"
+            windSpeed: 5.0,
+            windSpeedDegree: 180,
+            windGust: 6.0,
+            cloudCover: 0
         )
         mockProvider.mockWeather = expectedWeather
 
@@ -66,11 +71,16 @@ final class WeatherServiceTests: XCTestCase {
         let mockProvider = MockWeatherProvider()
         let weather = Weather(
             city: "Los Angeles",
-            temperature: 80.0,
             condition: "Clear",
-            windSpeed: 3.0,
+            icon: "01d",
+            temperature: 80.0,
+            feelsLike: 79.0,
+            pressure: 1013,
             humidity: 50,
-            icon: "01d"
+            windSpeed: 3.0,
+            windSpeedDegree: 180,
+            windGust: 4.0,
+            cloudCover: 0
         )
         mockProvider.mockWeather = weather
 
@@ -117,19 +127,29 @@ final class WeatherServiceTests: XCTestCase {
 
         let weather1 = Weather(
             city: "Boston",
-            temperature: 65.0,
             condition: "Rainy",
-            windSpeed: 10.0,
+            icon: "10d",
+            temperature: 65.0,
+            feelsLike: 66.0,
+            pressure: 1013,
             humidity: 75,
-            icon: "10d"
+            windSpeed: 10.0,
+            windSpeedDegree: 180,
+            windGust: 12.0,
+            cloudCover: 100
         )
         let weather2 = Weather(
             city: "Miami",
-            temperature: 85.0,
             condition: "Sunny",
-            windSpeed: 8.0,
+            icon: "01d",
+            temperature: 85.0,
+            feelsLike: 88.0,
+            pressure: 1013,
             humidity: 70,
-            icon: "01d"
+            windSpeed: 8.0,
+            windSpeedDegree: 90,
+            windGust: 9.0,
+            cloudCover: 0
         )
 
         mockProvider.mockWeather = weather1
@@ -162,11 +182,16 @@ final class WeatherServiceTests: XCTestCase {
         let mockProvider = MockWeatherProvider()
         let weather = Weather(
             city: "Seattle",
-            temperature: 60.0,
             condition: "Cloudy",
-            windSpeed: 6.0,
+            icon: "04d",
+            temperature: 60.0,
+            feelsLike: 59.0,
+            pressure: 1013,
             humidity: 80,
-            icon: "04d"
+            windSpeed: 6.0,
+            windSpeedDegree: 270,
+            windGust: 7.0,
+            cloudCover: 50
         )
         mockProvider.mockWeather = weather
 
@@ -200,11 +225,16 @@ final class WeatherServiceTests: XCTestCase {
         for (lat, lon) in coordinates {
             mockProvider.mockWeather = Weather(
                 city: "Test City",
-                temperature: 70.0,
                 condition: "Clear",
-                windSpeed: 5.0,
+                icon: nil,
+                temperature: 70.0,
+                feelsLike: 70.5,
+                pressure: 1013,
                 humidity: 60,
-                icon: nil
+                windSpeed: 5.0,
+                windSpeedDegree: 180,
+                windGust: 6.0,
+                cloudCover: 0
             )
 
             var result: Weather?
@@ -224,11 +254,16 @@ final class WeatherServiceTests: XCTestCase {
         let mockProvider = MockWeatherProvider()
         let weather = Weather(
             city: "Denver",
-            temperature: 68.5,
             condition: "Partly Cloudy",
-            windSpeed: 7.3,
+            icon: "02d",
+            temperature: 68.5,
+            feelsLike: 67.0,
+            pressure: 1013,
             humidity: 55,
-            icon: "02d"
+            windSpeed: 7.3,
+            windSpeedDegree: 180,
+            windGust: 8.0,
+            cloudCover: 50
         )
         mockProvider.mockWeather = weather
 

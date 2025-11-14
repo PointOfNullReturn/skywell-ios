@@ -63,11 +63,16 @@ final class WeatherProviderTests: XCTestCase {
         let provider = MockWeatherProvider()
         let expectedWeather = Weather(
             city: "Test City",
-            temperature: 72.0,
             condition: "Sunny",
-            windSpeed: 5.0,
+            icon: "01d",
+            temperature: 72.0,
+            feelsLike: 74.0,
+            pressure: 1013,
             humidity: 60,
-            icon: "01d"
+            windSpeed: 5.0,
+            windSpeedDegree: 180,
+            windGust: 6.0,
+            cloudCover: 0
         )
         provider.mockWeather = expectedWeather
 
@@ -104,11 +109,16 @@ final class WeatherProviderTests: XCTestCase {
         let provider = MockWeatherProvider()
         provider.mockWeather = Weather(
             city: "Test",
-            temperature: 70.0,
             condition: "Clear",
-            windSpeed: 3.0,
+            icon: nil,
+            temperature: 70.0,
+            feelsLike: 71.0,
+            pressure: 1013,
             humidity: 50,
-            icon: nil
+            windSpeed: 3.0,
+            windSpeedDegree: 180,
+            windGust: 4.0,
+            cloudCover: 0
         )
 
         let request = WeatherRequest(
@@ -129,11 +139,16 @@ final class WeatherProviderTests: XCTestCase {
         // First call
         let weather1 = Weather(
             city: "City1",
-            temperature: 70.0,
             condition: "Sunny",
-            windSpeed: 5.0,
+            icon: "01d",
+            temperature: 70.0,
+            feelsLike: 69.5,
+            pressure: 1013,
             humidity: 60,
-            icon: "01d"
+            windSpeed: 5.0,
+            windSpeedDegree: 180,
+            windGust: 6.0,
+            cloudCover: 0
         )
         provider.mockWeather = weather1
 
@@ -147,11 +162,16 @@ final class WeatherProviderTests: XCTestCase {
         // Second call with different data
         let weather2 = Weather(
             city: "City2",
-            temperature: 75.0,
             condition: "Cloudy",
-            windSpeed: 8.0,
+            icon: "04d",
+            temperature: 75.0,
+            feelsLike: 76.0,
+            pressure: 1013,
             humidity: 65,
-            icon: "04d"
+            windSpeed: 8.0,
+            windSpeedDegree: 270,
+            windGust: 9.0,
+            cloudCover: 50
         )
         provider.mockWeather = weather2
 

@@ -50,11 +50,16 @@ final class OpenWeatherAPIAdapter: WeatherProvider {
 
         return Weather(
             city: openWeatherResponse.name,
-            temperature: openWeatherResponse.main.temp,
             condition: openWeatherResponse.weather.first?.main ?? "Unknown",
-            windSpeed: openWeatherResponse.wind.speed,
+            icon: openWeatherResponse.weather.first?.icon,
+            temperature: openWeatherResponse.main.temp,
+            feelsLike: openWeatherResponse.main.feelsLike,
+            pressure: openWeatherResponse.main.pressure,
             humidity: openWeatherResponse.main.humidity,
-            icon: openWeatherResponse.weather.first?.icon
+            windSpeed: openWeatherResponse.wind.speed,
+            windSpeedDegree: openWeatherResponse.wind.deg,
+            windGust: openWeatherResponse.wind.gust ?? 0.0,
+            cloudCover: openWeatherResponse.clouds.all
         )
     }
 }
@@ -66,11 +71,21 @@ private struct OpenWeatherResponse: Codable {
     let main: Main
     let weather: [WeatherElement]
     let wind: Wind
+    let clouds: Clouds
 }
 
 private struct Main: Codable {
     let temp: Double
+    let feelsLike: Double
+    let pressure: Int
     let humidity: Int
+
+    private enum CodingKeys: String, CodingKey {
+        case temp
+        case feelsLike = "feels_like"
+        case pressure
+        case humidity
+    }
 }
 
 private struct WeatherElement: Codable {
@@ -81,6 +96,12 @@ private struct WeatherElement: Codable {
 
 private struct Wind: Codable {
     let speed: Double
+    let deg: Int
+    let gust: Double?
+}
+
+private struct Clouds: Codable {
+    let all: Int
 }
 
 // MARK: - Error Types

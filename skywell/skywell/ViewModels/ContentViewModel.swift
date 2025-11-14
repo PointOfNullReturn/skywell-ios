@@ -32,6 +32,7 @@ class ContentViewModel: ObservableObject {
     }
     @Published var displayTemperature: String = "—"
     @Published var displayTemperatureUnit: String = "°C"
+    @Published var displayFeelsLike: String = "—"
     @Published var locationCity: String?
     @Published var isLoading = false
     @Published var hasLoadedWeather = false
@@ -125,6 +126,8 @@ class ContentViewModel: ObservableObject {
 
     /// Configure the active weather provider with its API key from Keychain
     func configureActiveProvider() {
+        guard !isRunningInPreview else { return }
+
         guard let preferences = preferencesManager?.getPreferences() else {
             return
         }
@@ -155,6 +158,8 @@ class ContentViewModel: ObservableObject {
 
     /// Request location access and begin location updates
     func requestLocation() {
+        guard !isRunningInPreview else { return }
+
         locationManager.requestLocation()
     }
 
@@ -175,6 +180,10 @@ class ContentViewModel: ObservableObject {
     ///   - latitude: Latitude coordinate
     ///   - longitude: Longitude coordinate
     func fetchWeather(latitude: Double, longitude: Double) {
+        guard !isRunningInPreview else {
+            return
+        }
+
         isLoading = true
 
         weatherService.fetchWeather(latitude: latitude, longitude: longitude) { [weak self] weather in
@@ -193,6 +202,8 @@ class ContentViewModel: ObservableObject {
 
     /// Manually refresh weather data and location
     func refreshWeather() {
+        guard !isRunningInPreview else { return }
+
         // Request fresh location update (respecting distance filter)
         requestLocation()
 
@@ -210,22 +221,29 @@ class ContentViewModel: ObservableObject {
     private func updateDisplayTemperature() {
         guard let weather = currentWeather else {
             displayTemperature = "—"
+            displayFeelsLike = "—"
+            hasLoadedWeather = false
             return
         }
 
         let unitPreference = preferencesManager?.getUnitPreference() ?? .metric
         let tempValue: Double
+        let feelsLikeValue: Double
 
         if unitPreference == .imperial {
             displayTemperatureUnit = "°F"
             tempValue = TemperatureConverter.celsiusToFahrenheit(weather.temperature)
+            feelsLikeValue = TemperatureConverter.celsiusToFahrenheit(weather.feelsLike)
         } else {
             displayTemperatureUnit = "°C"
             tempValue = weather.temperature
+            feelsLikeValue = weather.feelsLike
         }
 
-        // Format to 1 decimal place
-        displayTemperature = String(format: "%.1f", tempValue)
+        // Format without fractional component for display
+        displayTemperature = String(Int(tempValue.rounded(.toNearestOrAwayFromZero)))
+        displayFeelsLike = String(Int(feelsLikeValue.rounded(.toNearestOrAwayFromZero)))
+        hasLoadedWeather = true
     }
 
     /// Refresh cached preferences state if available
@@ -271,10 +289,77 @@ class ContentViewModel: ObservableObject {
         return "—"
     }
 
-    /// Get wind speed value
+    /// Get wind speed value with unit conversion
     func getWindSpeed() -> String {
         if let weather = currentWeather {
-            return String(format: "%.1f m/s", weather.windSpeed)
+            let unitPreference = preferencesManager?.getUnitPreference() ?? .metric
+            let speed: Double
+            let unit: String
+
+            if unitPreference == .imperial {
+                speed = WindSpeedConverter.metersPerSecondToMilesPerHour(weather.windSpeed)
+                unit = "mph"
+            } else {
+                speed = weather.windSpeed
+                unit = "m/s"
+            }
+
+            return String(format: "%.1f %@", speed, unit)
+        }
+        return "—"
+    }
+
+    /// Get formatted feels-like temperature string
+    func getFeelsLike() -> String {
+        guard displayFeelsLike != "—" else {
+            return "—"
+        }
+
+        let unit = displayTemperatureUnit.replacingOccurrences(of: "°", with: "")
+        return "\(displayFeelsLike)°\(unit)"
+    }
+
+    /// Get atmospheric pressure value
+    func getPressure() -> String {
+        if let weather = currentWeather {
+            return "\(weather.pressure) hPa"
+        }
+        return "—"
+    }
+
+    /// Get wind direction with compass bearing
+    func getWindDirection() -> String {
+        if let weather = currentWeather {
+            let bearing = CompassDesignationConverter.compassBearing(from: weather.windSpeedDegree)
+            return "\(weather.windSpeedDegree)° \(bearing)"
+        }
+        return "—"
+    }
+
+    /// Get wind gust value with unit conversion
+    func getWindGust() -> String {
+        if let weather = currentWeather, weather.windGust > 0 {
+            let unitPreference = preferencesManager?.getUnitPreference() ?? .metric
+            let gust: Double
+            let unit: String
+
+            if unitPreference == .imperial {
+                gust = WindSpeedConverter.metersPerSecondToMilesPerHour(weather.windGust)
+                unit = "mph"
+            } else {
+                gust = weather.windGust
+                unit = "m/s"
+            }
+
+            return String(format: "%.1f %@", gust, unit)
+        }
+        return "—"
+    }
+
+    /// Get cloud cover percentage
+    func getCloudCover() -> String {
+        if let weather = currentWeather {
+            return "\(weather.cloudCover)%"
         }
         return "—"
     }
@@ -291,5 +376,9 @@ class ContentViewModel: ObservableObject {
     /// Cancel all active subscriptions
     deinit {
         cancellables.removeAll()
+    }
+
+    private var isRunningInPreview: Bool {
+        ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
     }
 }
